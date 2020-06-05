@@ -1,6 +1,6 @@
 capture program drop ventreg
 program ventreg, byable(recall,noheader)
-	*UPDATED January 2020, by Eric Christopher Vento
+	*UPDATED June 4, 2020, by Eric Christopher Vento
 	syntax [anything] [using/] [if], [, cluster(varlist)]
 	args depvar focals rhs
 	marksample touse
@@ -109,11 +109,11 @@ program ventreg, byable(recall,noheader)
 			qui count if `touse'==1
 			scalar records = r(N)
 			scalar regreturncode=999
-			if records > 1 {
+			if records > 10 {
 				*NO CLUSTERING********
 				if "`cluster'" == "" {
-					*capture reg `depvar' `focals' `model`y'' if `touse'
-					qui reg `depvar' `focals' `model`y'' if `touse'==1
+					capture reg `depvar' `focals' `model`y'' if `touse'
+					*qui reg `depvar' `focals' `model`y'' if `touse'==1
 				}
 				*CLUSTERING*
 				else {
@@ -141,7 +141,7 @@ program ventreg, byable(recall,noheader)
 			*POST ESTIMATION*
 			*****************
 			foreach focal in `focals' {
-				if records > 1 & regreturncode == 0 {
+				if regreturncode == 0 {
 					scalar coef = _b[`focal']
 					scalar stde = _se[`focal']
 					scalar tval = coef/stde
@@ -174,8 +174,7 @@ program ventreg, byable(recall,noheader)
 					drop unprot
 				}
 				
-				else if records == 1 | regreturncode!=0 {
-					*ENTER THIS LOOP IF ONLY ONE RECORD IN THIS BY GROUP*
+				else {
 					*BLANK ALL STATS (OTHER THAN COUNTS)
 					scalar coef = .
 					scalar stde = .
