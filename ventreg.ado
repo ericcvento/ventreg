@@ -1,6 +1,5 @@
 capture program drop ventreg
 program ventreg, byable(recall,noheader)
-	*UPDATED June 4, 2020, by Eric Christopher Vento
 	syntax [anything] [using/] [if], [, cluster(varlist)]
 	args depvar focals rhs
 	marksample touse
@@ -21,7 +20,7 @@ program ventreg, byable(recall,noheader)
 		preserve
 			*Display current by variable values*
 			qui keep if `touse'==1
-			dis `byvars'
+			l `byvars' in 1/1, noobs abbrev(32) 
 		restore 	
 	}
 
@@ -237,8 +236,7 @@ program ventreg, byable(recall,noheader)
 		postclose ventregresults
 		preserve 
 			use "$ventregdirname\ventregresults", clear
-			qui replace modelvars = trim(modelvars) 
-			sort focalname model
+			qui replace modelvars = trim(modelvars)
 
 			*IF THE BY VARIABLE WAS NUMERIC, RETURN IT.
 			if _by() {
@@ -252,7 +250,8 @@ program ventreg, byable(recall,noheader)
 			*SAVE TO FILE IN PROGRAM ARGUMENT*
 			if "`using'" != "" {
 				qui compress
-				qui save "`using'", replace 
+				qui save "`using'", replace
+				dis "ventreg, last updated June 5th, 2020."
 			}
 			else if "`using'"=="" {
 			}
@@ -265,11 +264,9 @@ program ventreg, byable(recall,noheader)
 	}
 	
 	*IF THE BY VARIABLE WAS NUMERIC, RETURN IT.
-	if _by() {
-		forvalues x = 1 / `byvarsN' {
-			if `byvar`x'isnumeric' == 0 {
-				qui destring `byvar`x'', replace 
-			}
+	forvalues x = 1 / `byvarsN' {
+		if `byvar`x'isnumeric' == 0 {
+			qui destring `byvar`x'', replace 
 		}
 	}
 
