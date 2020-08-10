@@ -1,6 +1,6 @@
 capture program drop ventreg
 program ventreg, byable(recall,noheader)
-	syntax [anything] [using/] [if], [, cluster(varlist)]
+	syntax [anything] [using/], [, cluster(varlist)]
 	args depvar focals rhs
 	marksample touse
 
@@ -101,134 +101,127 @@ program ventreg, byable(recall,noheader)
 	
 	*REGRESSIONS*
 	forvalues y = 1 / `yy' {
-		*ENTER LOOP IF AT LEAST ONE OBSERVATION*
+	
+		assert inlist(`touse',1,0)
 		qui count if `touse' == 1 
 		assert r(N) > 0 
-		if r(N) > 0 {
-			assert inlist(`touse',1,0)
-			qui count if `touse'==1
-			scalar records = r(N)
-			scalar regreturncode=999
-			if records > 10 {
-				*NO CLUSTERING********
-				if "`cluster'" == "" {
-					dis "standard standard error calculation"
-					capture reg `depvar' `focals' `model`y'' if `touse'==1
-				}
-				*CLUSTERING*
-				else {
-					dis "robust standard error calculation"
-					capture reg `depvar' `focals' `model`y'' if `touse'==1, cluster(`cluster')
-				}
-				scalar regreturncode = _rc
-				capture assert inlist(regreturncode,0)
-				if _rc!=0 {
-					dis "Return Code-" regreturncode}
-				}
-				
-				*warning for missing values by comparing # of records in by group and # of records analyzed*
-				qui count if `touse' == 1 
-				scalar check1 = r(N) 
-				qui count if e(sample) == 1 & `touse' == 1
-				scalar check2 = r(N)
-				assert records == check1
-				if check1 != check2 {
-					dis "Missing values for some variables in this model: `model`y''" 
-				}
-			}
+		scalar records = r(N)
+		scalar regreturncode=999
 
-			dis regreturncode
-
-			*****************
-			*POST ESTIMATION*
-			*****************
-			foreach focal in `focals' {
-				if regreturncode == 0 {
-					scalar coef = _b[`focal']
-					scalar stde = _se[`focal']
-					scalar tval = coef/stde
-					scalar pval = 2*ttail(e(df_r),abs(tval))
-					scalar r2 = e(r2)
-					scalar fval = e(F)
-					scalar prf = Ftail(e(df_m),e(df_r),e(F))
-					scalar nvars = e(rank) - 1
-					scalar obs = e(N)
-					scalar modelvars = e(rank) - 1
-					
-					*average dependant variable when focal/protected is 1 
-					qui sum `depvar' if `focal'==1 & `touse'==1 & e(sample) == 1 
-					scalar avgfocaldepvar = r(mean)
-					scalar coeffpctdepvar = coef/avgfocaldepvar
-					scalar focalobs = r(N)
+		*NO CLUSTERING********
+		if "`cluster'" == "" {
+			capture reg `depvar' `focals' `model`y'' if `touse'==1
+		}
+		*CLUSTERING*
+		else {
+			capture reg `depvar' `focals' `model`y'' if `touse'==1, cluster(`cluster')
+		}
 		
-					*AVERAGE DEPVAR IF YOU ARE NEVER A FOCAL*****
-					capture confirm variable unprot
-					if _rc == 0 {
-						dis "CONFLICTING VARIABLE NAME: PLEASE RENAME unprot BEFORE RUNNING THIS PROGRAM"
-						exit
-					}
-					qui gen unprot = 1 if `touse'==1 & e(sample) == 1 
-					foreach f in `focals' {
-						qui replace unprot = 0 if `f' == 1 
-					}
-					qui sum `depvar' if unprot==1 & `touse'==1 & e(sample) == 1 
-					scalar avgneverfocaldepvar = r(mean)
-					drop unprot
+		scalar regreturncode = _rc
+		capture assert inlist(regreturncode,0)
+		if _rc!=0 {
+			dis "Return Code-" regreturncode
+		}
+		
+		*warning for missing values by comparing # of records in by group and # of records analyzed*
+		qui count if `touse' == 1 
+		scalar check1 = r(N) 
+		qui count if e(sample) == 1 & `touse' == 1
+		scalar check2 = r(N)
+		assert records == check1
+		if check1 != check2 {
+			dis "Missing values for some variables in this model: `model`y''" 
+		}
+
+		*****************
+		*POST ESTIMATION*
+		*****************
+		foreach focal in `focals' {
+			if regreturncode == 0 {
+				scalar coef = _b[`focal']
+				scalar stde = _se[`focal']
+				scalar tval = coef/stde
+				scalar pval = 2*ttail(e(df_r),abs(tval))
+				scalar r2 = e(r2)
+				scalar fval = e(F)
+				scalar prf = Ftail(e(df_m),e(df_r),e(F))
+				scalar nvars = e(rank) - 1
+				scalar obs = e(N)
+				scalar modelvars = e(rank) - 1
+				
+				*average dependant variable when focal/protected is 1 
+				qui sum `depvar' if `focal'==1 & `touse'==1 & e(sample) == 1 
+				scalar avgfocaldepvar = r(mean)
+				scalar coeffpctdepvar = coef/avgfocaldepvar
+				scalar focalobs = r(N)
+	
+				*AVERAGE DEPVAR IF YOU ARE NEVER A FOCAL*****
+				capture confirm variable unprot
+				if _rc == 0 {
+					dis "CONFLICTING VARIABLE NAME: PLEASE RENAME unprot BEFORE RUNNING THIS PROGRAM"
+					exit
 				}
-				
-				else {
-					*BLANK ALL STATS (OTHER THAN COUNTS)
-					scalar coef = .
-					scalar stde = .
-					scalar tval = .
-					scalar pval = .
-					scalar r2 = .
-					scalar fval = .
-					scalar nvars = .
-					scalar modelvars = .
-					scalar avgfocaldepvar = .
-					scalar coeffpctdepvar = .
-					scalar avgneverfocaldepvar = .
-					
-					qui count if `touse'==1
-					assert r(N) == records
-					scalar obs = records
-					qui count if `focal'==1 & `touse'==1  
-					scalar focalobs = r(N)
+				qui gen unprot = 1 if `touse'==1 & e(sample) == 1 
+				foreach f in `focals' {
+					qui replace unprot = 0 if `f' == 1 
 				}
+				qui sum `depvar' if unprot==1 & `touse'==1 & e(sample) == 1 
+				scalar avgneverfocaldepvar = r(mean)
+				drop unprot
+			}
+			
+			else {
+				*BLANK ALL STATS (OTHER THAN COUNTS)
+				scalar coef = .
+				scalar stde = .
+				scalar tval = .
+				scalar pval = .
+				scalar r2 = .
+				scalar fval = .
+				scalar nvars = .
+				scalar modelvars = .
+				scalar avgfocaldepvar = .
+				scalar coeffpctdepvar = .
+				scalar avgneverfocaldepvar = .
 				
-				*LOCAL VARIABLE TO STORE THE NUMERIC VARS*
-				local reportstats = "(coef) (stde) (tval) (pval) (r2) (fval) (obs) (focalobs) (modelvars) (avgfocaldepvar) (coeffpctdepvar) (avgneverfocaldepvar) (regreturncode)"
-				
-				if _by() == 0 {
-					post ventregresults (_byindex()) (`y') ("`depvar'") ("`focal'") ("`model`y''") ///
+				qui count if `touse'==1
+				assert r(N) == records
+				scalar obs = records
+				qui count if `focal'==1 & `touse'==1  
+				scalar focalobs = r(N)
+			}
+			
+			*LOCAL VARIABLE TO STORE THE NUMERIC VARS*
+			local reportstats = "(coef) (stde) (tval) (pval) (r2) (fval) (obs) (focalobs) (modelvars) (avgfocaldepvar) (coeffpctdepvar) (avgneverfocaldepvar) (regreturncode)"
+			
+			if _by() == 0 {
+				post ventregresults (_byindex()) (`y') ("`depvar'") ("`focal'") ("`model`y''") ///
+				`reportstats'
+			}
+			else {
+				if `byvarsN' == 1 {
+					post ventregresults (_byindex()) (`y') ("`depvar'") ("`byvars'") ("`focal'") ("`model`y''") (`byvar1'[_byn1()]) ///
 					`reportstats'
 				}
-				else {
-					if `byvarsN' == 1 {
-						post ventregresults (_byindex()) (`y') ("`depvar'") ("`byvars'") ("`focal'") ("`model`y''") (`byvar1'[_byn1()]) ///
-						`reportstats'
-					}
-					if `byvarsN' ==  2 {
-						post ventregresults (_byindex()) (`y') ("`depvar'") ("`byvars'") ("`focal'") ("`model`y''") (`byvar1'[_byn1()]) (`byvar2'[_byn1()]) ///
-						`reportstats'
-					}
-					if `byvarsN' ==  3 {
-						post ventregresults (_byindex()) (`y') ("`depvar'") ("`byvars'") ("`focal'") ("`model`y''") (`byvar1'[_byn1()]) (`byvar2'[_byn1()]) (`byvar3'[_byn1()]) ///
-						`reportstats'
-					}
-					if `byvarsN' ==  4 {
-						post ventregresults (_byindex()) (`y') ("`depvar'") ("`byvars'") ("`focal'") ("`model`y''") (`byvar1'[_byn1()]) (`byvar2'[_byn1()]) (`byvar3'[_byn1()]) (`byvar4'[_byn1()]) ///
-						`reportstats'
-					}
-					if `byvarsN' ==  5 {
-						post ventregresults (_byindex()) (`y') ("`depvar'") ("`byvars'") ("`focal'") ("`model`y''") (`byvar1'[_byn1()]) (`byvar2'[_byn1()]) (`byvar3'[_byn1()]) (`byvar4'[_byn1()]) (`byvar5'[_byn1()]) ///
-						`reportstats'
-					}
-					if `byvarsN' ==  6 {
-						post ventregresults (_byindex()) (`y') ("`depvar'") ("`byvars'") ("`focal'") ("`model`y''") (`byvar1'[_byn1()]) (`byvar2'[_byn1()]) (`byvar3'[_byn1()]) (`byvar4'[_byn1()]) (`byvar5'[_byn1()]) (`byvar6'[_byn1()]) ///
-						`reportstats'
-					}
+				if `byvarsN' ==  2 {
+					post ventregresults (_byindex()) (`y') ("`depvar'") ("`byvars'") ("`focal'") ("`model`y''") (`byvar1'[_byn1()]) (`byvar2'[_byn1()]) ///
+					`reportstats'
+				}
+				if `byvarsN' ==  3 {
+					post ventregresults (_byindex()) (`y') ("`depvar'") ("`byvars'") ("`focal'") ("`model`y''") (`byvar1'[_byn1()]) (`byvar2'[_byn1()]) (`byvar3'[_byn1()]) ///
+					`reportstats'
+				}
+				if `byvarsN' ==  4 {
+					post ventregresults (_byindex()) (`y') ("`depvar'") ("`byvars'") ("`focal'") ("`model`y''") (`byvar1'[_byn1()]) (`byvar2'[_byn1()]) (`byvar3'[_byn1()]) (`byvar4'[_byn1()]) ///
+					`reportstats'
+				}
+				if `byvarsN' ==  5 {
+					post ventregresults (_byindex()) (`y') ("`depvar'") ("`byvars'") ("`focal'") ("`model`y''") (`byvar1'[_byn1()]) (`byvar2'[_byn1()]) (`byvar3'[_byn1()]) (`byvar4'[_byn1()]) (`byvar5'[_byn1()]) ///
+					`reportstats'
+				}
+				if `byvarsN' ==  6 {
+					post ventregresults (_byindex()) (`y') ("`depvar'") ("`byvars'") ("`focal'") ("`model`y''") (`byvar1'[_byn1()]) (`byvar2'[_byn1()]) (`byvar3'[_byn1()]) (`byvar4'[_byn1()]) (`byvar5'[_byn1()]) (`byvar6'[_byn1()]) ///
+					`reportstats'
 				}
 			}
 		}
