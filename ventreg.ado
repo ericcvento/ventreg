@@ -103,6 +103,7 @@ program ventreg, byable(recall,noheader)
 	forvalues y = 1 / `yy' {
 		*ENTER LOOP IF AT LEAST ONE OBSERVATION*
 		qui count if `touse' == 1 
+		assert r(N) > 0 
 		if r(N) > 0 {
 			assert inlist(`touse',1,0)
 			qui count if `touse'==1
@@ -111,13 +112,13 @@ program ventreg, byable(recall,noheader)
 			if records > 10 {
 				*NO CLUSTERING********
 				if "`cluster'" == "" {
-					capture reg `depvar' `focals' `model`y'' if `touse'
-					*qui reg `depvar' `focals' `model`y'' if `touse'==1
+					dis "standard standard error calculation"
+					capture reg `depvar' `focals' `model`y'' if `touse'==1
 				}
 				*CLUSTERING*
 				else {
-					*capture reg `depvar' `focals' `model`y'' if `touse', cluster(`cluster')
-					qui reg `depvar' `focals' `model`y'' if `touse'==1, cluster(`cluster')
+					dis "robust standard error calculation"
+					capture reg `depvar' `focals' `model`y'' if `touse'==1, cluster(`cluster')
 				}
 				scalar regreturncode = _rc
 				capture assert inlist(regreturncode,0)
@@ -135,6 +136,8 @@ program ventreg, byable(recall,noheader)
 					dis "Missing values for some variables in this model: `model`y''" 
 				}
 			}
+
+			dis regreturncode
 
 			*****************
 			*POST ESTIMATION*
@@ -251,7 +254,7 @@ program ventreg, byable(recall,noheader)
 			if "`using'" != "" {
 				qui compress
 				qui save "`using'", replace
-				dis "ventreg, last updated June 5th, 2020."
+				dis "ventreg, last updated August 10th, 2020."
 			}
 			else if "`using'"=="" {
 			}
