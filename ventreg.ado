@@ -20,7 +20,7 @@ program ventreg, byable(recall,noheader)
 		preserve
 			*Display current by variable values*
 			qui keep if `touse'==1
-			l `byvars' in 1/1, noobs abbrev(32) 
+			l `byvars' in 1/1, noobs abbrev(32)
 		restore 	
 	}
 
@@ -247,14 +247,14 @@ program ventreg, byable(recall,noheader)
 			if "`using'" != "" {
 				qui compress
 				qui save "`using'", replace
-				dis "ventreg, last updated August 10th, 2020."
+				dis "ventreg, last updated December 28th, 2020."
 			}
 			else if "`using'"=="" {
 			}
 			
 			*ERASING RESULTS FILE AND DIRECTORY*
 			erase "$ventregdirname\ventregresults.dta"
-			sleep 10
+			sleep 100
 			rmdir "$ventregdirname"
 		restore 
 	}
