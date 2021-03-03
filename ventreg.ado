@@ -247,7 +247,7 @@ program ventreg, byable(recall,noheader)
 			if "`using'" != "" {
 				qui compress
 				qui save "`using'", replace
-				dis "ventreg, last updated January 19th, 2021."
+				dis "ventreg, last updated March 3rd, 2021."
 			}
 			else if "`using'"=="" {
 			}
