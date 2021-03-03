@@ -247,14 +247,14 @@ program ventreg, byable(recall,noheader)
 			if "`using'" != "" {
 				qui compress
 				qui save "`using'", replace
-				dis "ventreg, last updated December 28th, 2020."
+				dis "ventreg, last updated January 19th, 2021."
 			}
 			else if "`using'"=="" {
 			}
 			
 			*ERASING RESULTS FILE AND DIRECTORY*
 			erase "$ventregdirname\ventregresults.dta"
-			sleep 100
+			sleep 150
 			rmdir "$ventregdirname"
 		restore 
 	}
