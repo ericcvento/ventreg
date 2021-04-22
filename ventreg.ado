@@ -96,6 +96,9 @@ program ventreg, byable(recall,noheader)
 			if `byvarsN' == 6 {
 				qui postfile ventregresults double(index model) str2000(depvar byvars focalname modelvars `byvar1' `byvar2' `byvar3' `byvar4' `byvar5' `byvar6') double(`poststats') using "$ventregdirname\ventregresults", replace
 			}
+			if `byvarsN' == 7 {
+				qui postfile ventregresults double(index model) str2000(depvar byvars focalname modelvars `byvar1' `byvar2' `byvar3' `byvar4' `byvar5' `byvar6' `byvar7') double(`poststats') using "$ventregdirname\ventregresults", replace
+			}
 		}
 	}
 	
@@ -221,6 +224,10 @@ program ventreg, byable(recall,noheader)
 				}
 				if `byvarsN' ==  6 {
 					post ventregresults (_byindex()) (`y') ("`depvar'") ("`byvars'") ("`focal'") ("`model`y''") (`byvar1'[_byn1()]) (`byvar2'[_byn1()]) (`byvar3'[_byn1()]) (`byvar4'[_byn1()]) (`byvar5'[_byn1()]) (`byvar6'[_byn1()]) ///
+					`reportstats'
+				}
+				if `byvarsN' ==  7 {
+					post ventregresults (_byindex()) (`y') ("`depvar'") ("`byvars'") ("`focal'") ("`model`y''") (`byvar1'[_byn1()]) (`byvar2'[_byn1()]) (`byvar3'[_byn1()]) (`byvar4'[_byn1()]) (`byvar5'[_byn1()]) (`byvar6'[_byn1()]) (`byvar7'[_byn1()]) ///
 					`reportstats'
 				}
 			}
