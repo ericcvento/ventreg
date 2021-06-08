@@ -1,8 +1,10 @@
-capture program drop ventreg
 program ventreg, byable(recall,noheader)
 	syntax [anything] [using/], [, cluster(varlist)]
 	args depvar focals rhs
-	marksample touse
+	marksample touse	
+	
+	*special thanks to Wayne Strayer, Kate Fricker, and Eric Mitchem
+	set matsize 11000
 
 	*count and process By variables
 	if _by() != 0 {	
@@ -254,7 +256,7 @@ program ventreg, byable(recall,noheader)
 			if "`using'" != "" {
 				qui compress
 				qui save "`using'", replace
-				dis "ventreg, last updated April 22, 2021."
+				dis "ventreg, last updated June 8th, 2021."
 			}
 			else if "`using'"=="" {
 			}
@@ -272,5 +274,6 @@ program ventreg, byable(recall,noheader)
 			qui destring `byvar`x'', replace 
 		}
 	}
+	set matsize 400
+end
 
-end 
