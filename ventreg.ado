@@ -69,7 +69,9 @@ program ventreg, byable(recall,noheader)
 		global ventregd = c(current_date)
 		global ventregt = c(current_time)
 		global ventregt = subinstr("$ventregt",":","_",.)
-		global ventregdirname = "C:\Users\Public\Documents\ventreg results_$ventregt"
+    * Use the current user's profile directory
+    * TODO: Do environment variables like this get expanded in mkdir?
+		global ventregdirname = "%USERPROFILE%\Documents\ventreg results_$ventregt"
 		mkdir "$ventregdirname"
 		sleep 10
 
