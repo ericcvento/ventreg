@@ -4,6 +4,7 @@ program ventreg, byable(recall,noheader)
 	marksample touse	
 	
 	*special thanks to Wayne Strayer, Kate Fricker, and Eric Mitchem
+	*check https://github.com/ericcvento/ventreg to make sure you are running current version!
 	set matsize 11000
 
 	*count and process By variables
